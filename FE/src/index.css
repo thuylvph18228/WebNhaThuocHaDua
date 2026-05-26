@@ -1,0 +1,76 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Roboto', Arial, sans-serif;
+  font-size: 14px;
+  color: #333;
+  background: #f5f5f5;
+}
+
+/* Scrollbar tùy chỉnh */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+  background: #00a651;
+  border-radius: 3px;
+}
+
+/* Animation scroll */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-on-scroll {
+  opacity: 0;
+}
+
+.animate-on-scroll.visible {
+  animation: fadeInUp 0.6s ease forwards;
+}
+
+/* In phiếu nhập kho */
+@media print {
+  body > * { display: none !important; }
+  #print-area { display: block !important; }
+  @page { margin: 1.5cm; size: A4; }
+}
+
+/* Nút thêm giỏ hàng */
+.btn-primary {
+  @apply bg-primary text-white px-4 py-2 rounded hover:bg-primary-dark transition-colors duration-200 text-sm font-medium;
+}
+
+.btn-secondary {
+  @apply bg-secondary text-white px-4 py-2 rounded hover:opacity-90 transition-opacity duration-200 text-sm font-medium;
+}
+
+/* Card sản phẩm */
+.product-card {
+  @apply bg-white rounded shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden;
+}
+
+/* Badge giá */
+.price-tag {
+  @apply text-red-600 font-bold text-base;
+}
