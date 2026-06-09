@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { ProductProvider } from './context/ProductContext';
 import { CatalogProvider } from './context/CatalogContext';
 import Header from './components/Header';
@@ -20,6 +21,7 @@ import POS from './pages/POS';
 import POSOrders from './pages/POSOrders';
 import Inventory from './pages/Inventory';
 import Admin from './pages/Admin';
+import AdminTheme from './pages/AdminTheme';
 import ProductCatalog from './pages/ProductCatalog';
 import { NewsList, NewsDetail } from './pages/News';
 
@@ -28,6 +30,14 @@ function StaffRoute({ children }) {
   const { user, canUsePOS } = useAuth();
   if (!user) return <Navigate to="/tai-khoan" replace />;
   if (!canUsePOS) return <Navigate to="/" replace />;
+  return children;
+}
+
+// Guard route — chỉ admin mới vào được
+function AdminRoute({ children }) {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/tai-khoan" replace />;
+  if (user.role !== 'admin') return <Navigate to="/" replace />;
   return children;
 }
 
@@ -56,6 +66,8 @@ function MainLayout({ children }) {
 export default function App() {
   return (
     <BrowserRouter>
+      {/* ThemeProvider bao ngoài cùng để áp dụng CSS vars ngay khi mount */}
+      <ThemeProvider>
       {/* AuthProvider bao ngoài cùng để Header và POS đều đọc được */}
       <AuthProvider>
         <ProductProvider>
@@ -90,7 +102,8 @@ export default function App() {
                   <Route path="/danh-muc/ly-do-xuat"   element={<ProductCatalog />} />
                   <Route path="/danh-muc/nha-cung-cap" element={<ProductCatalog />} />
                   <Route path="/danh-muc/kho-hang"     element={<ProductCatalog />} />
-                  <Route path="/admin" element={<Admin />} />
+                  <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
+                  <Route path="/admin/giao-dien" element={<AdminRoute><AdminTheme /></AdminRoute>} />
                   <Route path="/gioi-thieu" element={<Placeholder title="Giới thiệu" />} />
                   <Route path="/chinh-sach-dai-ly" element={<Placeholder title="Chính sách đại lý" />} />
                   <Route path="/tuyen-dung" element={<Placeholder title="Tuyển dụng" />} />
@@ -103,6 +116,7 @@ export default function App() {
         </CatalogProvider>
         </ProductProvider>
       </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   );
 }

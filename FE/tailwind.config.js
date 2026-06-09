@@ -7,12 +7,21 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Màu đọc từ CSS variables — thay đổi được từ trang /admin/giao-dien
         primary: {
-          DEFAULT: '#00a651',
-          dark: '#007a3d',
-          light: '#e8f5ee',
+          DEFAULT: 'var(--color-primary)',
+          dark: 'var(--color-primary-dark)',
+          light: 'var(--color-primary-light)',
         },
-        secondary: '#f26522',
+        secondary: 'var(--color-secondary)',
+        'header-bg': 'var(--color-header-bg)',
+        'footer-bg': 'var(--color-footer-bg)',
+        'footer-text': 'var(--color-footer-text)',
+        'btn-add': 'var(--color-btn-add)',
+        'btn-edit': 'var(--color-btn-edit)',
+        'btn-delete': 'var(--color-btn-delete)',
+        'btn-print': 'var(--color-btn-print)',
+        'btn-view': 'var(--color-btn-view)',
       },
       fontFamily: {
         sans: ['Roboto', 'Arial', 'sans-serif'],

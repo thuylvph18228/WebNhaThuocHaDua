@@ -3,7 +3,7 @@ import { Phone, Mail, MapPin } from 'lucide-react';
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-800 text-gray-300 mt-8">
+    <footer className="bg-footer-bg text-footer-text mt-8">
       {/* Footer chính */}
       <div className="container mx-auto px-4 py-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -130,7 +130,7 @@ export default function Footer() {
       </div>
 
       {/* Copyright */}
-      <div className="bg-gray-900 text-center py-3 text-xs text-gray-500">
+      <div className="bg-footer-bg text-footer-text border-t border-white/10 text-center py-3 text-xs opacity-60">
         © 2026 Nhà Thuốc Hà Đua. Tất cả quyền được bảo lưu.
         <span className="mx-2">|</span>
         Giấy phép kinh doanh: 0123456789 - Sở KHĐT TP.Thanh Hóa cấp

@@ -2,7 +2,7 @@ import { Link, Navigate } from 'react-router-dom';
 import {
   Package, ClipboardList, LogOut, Users,
   TrendingUp, ShoppingCart, ArrowUpRight,
-  BarChart2, AlertTriangle, Truck,
+  BarChart2, AlertTriangle, Truck, Palette,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -104,10 +104,12 @@ export default function Admin() {
 
       <h2 className="text-sm font-bold text-gray-600 uppercase tracking-wide mb-3">Quản lý hệ thống</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <NavCard to="/san-pham" icon={Package} label="Danh mục sản phẩm"
+        <NavCard to="/danh-muc/san-pham" icon={Package} label="Danh mục sản phẩm"
           desc="Xem toàn bộ sản phẩm trên website" color="bg-gray-500" />
         <NavCard to="/tai-khoan" icon={Users} label="Tài khoản"
           desc="Thông tin tài khoản quản trị" color="bg-gray-600" />
+        <NavCard to="/admin/giao-dien" icon={Palette} label="Thiết kế giao diện"
+          desc="Tùy chỉnh màu sắc, nút, header, footer" color="bg-pink-500" />
       </div>
     </div>
   );

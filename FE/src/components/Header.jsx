@@ -42,7 +42,7 @@ export default function Header() {
   return (
     <header className="w-full sticky top-0 z-50 shadow-md">
       {/* Thanh thông tin trên cùng */}
-      <div className="bg-gray-700 text-gray-200 text-xs py-1.5 hidden md:block">
+      <div className="bg-primary text-white/90 text-xs py-1.5 hidden md:block">
         <div className="container mx-auto px-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <span>📍 196 Nguyễn Doãn Chất, P.Quảng Phú, TP.Thanh Hóa</span>
@@ -80,8 +80,8 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Header chính — nền trắng */}
-      <div className="bg-white border-b">
+      {/* Header chính — nền theo theme */}
+      <div className="bg-header-bg border-b">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center gap-4">
             {/* Logo */}
@@ -271,7 +271,7 @@ export default function Header() {
           <ul className="flex items-center">
             {/* Danh mục dropdown */}
             <li className="relative group">
-              <button className="flex items-center gap-1.5 text-white font-bold py-3 px-4 bg-green-800 hover:bg-green-900 transition-colors text-sm">
+              <button className="flex items-center gap-1.5 text-white font-bold py-3 px-4 bg-primary-dark hover:opacity-90 transition-colors text-sm">
                 <Menu size={15} />
                 <span>DANH MỤC SẢN PHẨM</span>
                 <ChevronDown size={13} />
@@ -305,7 +305,7 @@ export default function Header() {
 
             {navLinks.slice(1).map(link => (
               <li key={link.to}>
-                <Link to={link.to} className="block text-white text-sm py-3 px-3 hover:bg-green-700 transition-colors font-medium whitespace-nowrap">
+                <Link to={link.to} className="block text-white text-sm py-3 px-3 hover:bg-primary-dark transition-colors font-medium whitespace-nowrap">
                   {link.label}
                 </Link>
               </li>
@@ -313,8 +313,8 @@ export default function Header() {
 
             {/* Dropdown Quản lý — chỉ hiện với staff/admin */}
             {canUsePOS && (
-              <li className="relative group border-l border-green-600 ml-1">
-                <button className="flex items-center gap-1.5 text-white text-sm py-3 px-3 hover:bg-green-700 transition-colors font-medium whitespace-nowrap">
+              <li className="relative group border-l border-white/30 ml-1">
+                <button className="flex items-center gap-1.5 text-white text-sm py-3 px-3 hover:bg-primary-dark transition-colors font-medium whitespace-nowrap">
                   <Settings size={14} />
                   Quản lý
                   <ChevronDown size={12} className="group-hover:rotate-180 transition-transform" />
@@ -344,8 +344,8 @@ export default function Header() {
 
             {/* Dropdown Danh mục — chỉ admin */}
             {user?.role === 'admin' && (
-              <li className="relative group border-l border-green-600">
-                <button className="flex items-center gap-1.5 text-white text-sm py-3 px-3 hover:bg-green-700 transition-colors font-medium whitespace-nowrap">
+              <li className="relative group border-l border-white/30">
+                <button className="flex items-center gap-1.5 text-white text-sm py-3 px-3 hover:bg-primary-dark transition-colors font-medium whitespace-nowrap">
                   <LayoutList size={14} />
                   Danh mục
                   <ChevronDown size={12} className="group-hover:rotate-180 transition-transform" />
