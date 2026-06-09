@@ -561,7 +561,7 @@ function PrintReceipt({ receipt, reasons, suppliers, warehouses }) {
   const total = receipt.lines.reduce((s, l) => s + (Number(l.quantity) || 0) * (Number(l.importPrice) || 0), 0);
 
   return (
-    <div id="print-area" className="hidden print:block p-8 font-sans text-sm">
+    <div id="print-area" className="invisible fixed top-0 left-0 w-full print:visible p-8 font-sans text-sm bg-white">
       <div className="text-center mb-4">
         <div className="text-xl font-black">NHÀ THUỐC HÀ ĐUA</div>
         <div className="text-xs text-gray-500">196 Nguyễn Doãn Chất, TP.Thanh Hóa | 0972.201.843</div>

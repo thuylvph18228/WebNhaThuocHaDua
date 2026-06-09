@@ -17,6 +17,15 @@ export default {
       fontFamily: {
         sans: ['Roboto', 'Arial', 'sans-serif'],
       },
+      keyframes: {
+        scan: {
+          '0%, 100%': { top: '8px' },
+          '50%': { top: 'calc(100% - 10px)' },
+        },
+      },
+      animation: {
+        scan: 'scan 2s ease-in-out infinite',
+      },
     },
   },
   plugins: [],

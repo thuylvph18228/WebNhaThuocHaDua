@@ -156,8 +156,17 @@ export default function ProductDetail() {
                     {product.registrationNo && (
                       <div><span className="text-gray-500">SĐK:</span> <span className="font-medium">{product.registrationNo}</span></div>
                     )}
+                    {product.donViTinh && (
+                      <div><span className="text-gray-500">Đơn vị tính:</span> <span className="font-medium">{product.donViTinh}</span></div>
+                    )}
+                    {product.duongDung && (
+                      <div><span className="text-gray-500">Đường dùng:</span> <span className="font-medium">{product.duongDung}</span></div>
+                    )}
                     {product.activeIngredient && (
                       <div className="col-span-2"><span className="text-gray-500">Hoạt chất:</span> <span className="font-medium">{product.activeIngredient}</span></div>
+                    )}
+                    {product.hamLuong && (
+                      <div className="col-span-2"><span className="text-gray-500">Hàm lượng:</span> <span className="font-medium">{product.hamLuong}</span></div>
                     )}
                   </div>
                 </div>

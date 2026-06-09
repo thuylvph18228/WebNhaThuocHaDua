@@ -2,12 +2,13 @@ import { useState, useMemo, useRef, useCallback } from 'react';
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import {
   Search, Plus, X, Edit2, Trash2, ToggleLeft, ToggleRight,
-  Upload, Package, ChevronLeft, ChevronRight, Save,
+  Upload, Package, ChevronLeft, ChevronRight, Save, Barcode, Printer,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProducts } from '../context/ProductContext';
 import { useCatalog } from '../context/CatalogContext';
 import { categories } from '../data/mockData';
+import BarcodePrintModal from '../components/BarcodePrintModal';
 
 const PAGE_SIZE = 10;
 
@@ -27,7 +28,8 @@ function ProductForm({ product, onSave, onCancel }) {
     name: '', maview: '', price: '', originalPrice: '',
     category: categories[0]?.slug || '', brand: '',
     isRx: false, badge: '', manufacturer: '', origin: '',
-    registrationNo: '', activeIngredient: '', description: '', image: '',
+    registrationNo: '', activeIngredient: '', hamLuong: '', duongDung: '', donViTinh: '',
+    description: '', image: '',
   });
   const [form, setForm] = useState(product ? { ...product } : blank());
   const [error, setError] = useState('');
@@ -130,13 +132,39 @@ function ProductForm({ product, onSave, onCancel }) {
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary font-mono"/>
             </div>
           )}
-          {form.isRx && (
-            <div className="md:col-span-2">
-              <label className="block text-xs font-semibold text-gray-600 mb-1">Hoạt chất</label>
-              <input value={form.activeIngredient} onChange={e => setF('activeIngredient', e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"/>
-            </div>
-          )}
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">Đơn vị tính</label>
+            <input value={form.donViTinh} onChange={e => setF('donViTinh', e.target.value)} placeholder="VD: Hộp, Chai, Cái"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"/>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">Đường dùng</label>
+            <select value={form.duongDung} onChange={e => setF('duongDung', e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary">
+              <option value="">— Chọn —</option>
+              <option>Uống</option>
+              <option>Uống (pha với nước)</option>
+              <option>Tiêm</option>
+              <option>Nhỏ mắt</option>
+              <option>Nhỏ tai</option>
+              <option>Dùng ngoài da</option>
+              <option>Đặt âm đạo</option>
+              <option>Xịt mũi</option>
+              <option>Ngậm dưới lưỡi</option>
+            </select>
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-xs font-semibold text-gray-600 mb-1">Hoạt chất</label>
+            <input value={form.activeIngredient} onChange={e => setF('activeIngredient', e.target.value)}
+              placeholder="VD: Paracetamol, Acid ascorbic (Vitamin C)"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"/>
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-xs font-semibold text-gray-600 mb-1">Hàm lượng</label>
+            <input value={form.hamLuong} onChange={e => setF('hamLuong', e.target.value)}
+              placeholder="VD: 500mg/viên, EPA 180mg + DHA 120mg/viên nang"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"/>
+          </div>
 
           {/* Ảnh sản phẩm */}
           <div className="md:col-span-4">
@@ -190,6 +218,8 @@ function ProductSection() {
   const [catFilter, setCatFilter] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [page, setPage] = useState(1);
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [printProducts, setPrintProducts] = useState(null); // null | product[]
 
   const filtered = useMemo(() => {
     let list = products;
@@ -224,7 +254,24 @@ function ProductSection() {
     if (window.confirm(`Xóa sản phẩm "${p.name}"?\nHành động này không thể hoàn tác.`)) {
       deleteProduct(p.id);
       if (editingId === p.id) setEditingId(null);
+      setSelectedIds(prev => { const s = new Set(prev); s.delete(p.id); return s; });
     }
+  };
+
+  const toggleSelect = (id) =>
+    setSelectedIds(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
+
+  const toggleSelectAll = () => {
+    if (paged.every(p => selectedIds.has(p.id)))
+      setSelectedIds(prev => { const s = new Set(prev); paged.forEach(p => s.delete(p.id)); return s; });
+    else
+      setSelectedIds(prev => { const s = new Set(prev); paged.forEach(p => s.add(p.id)); return s; });
+  };
+
+  const printSelected = () => {
+    const list = products.filter(p => selectedIds.has(p.id) && p.maview);
+    if (list.length === 0) { alert('Chưa chọn sản phẩm nào có mã barcode'); return; }
+    setPrintProducts(list);
   };
 
   return (
@@ -243,6 +290,12 @@ function ProductSection() {
         </select>
         <div className="ml-auto flex items-center gap-2">
           <span className="text-xs text-gray-400">{products.filter(p => !p.active).length} ẩn</span>
+          {selectedIds.size > 0 && (
+            <button onClick={printSelected}
+              className="flex items-center gap-1.5 border border-primary text-primary px-3 py-2 rounded-lg hover:bg-primary-light text-sm font-medium">
+              <Printer size={14}/> In barcode ({selectedIds.size})
+            </button>
+          )}
           <button onClick={() => setEditingId('new')} disabled={!!editingId}
             className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark text-sm font-medium disabled:opacity-50">
             <Plus size={15}/> Thêm sản phẩm
@@ -253,53 +306,67 @@ function ProductSection() {
       {/* Form thêm/sửa */}
       {editingId && <ProductForm product={editingProduct} onSave={handleSave} onCancel={() => setEditingId(null)}/>}
 
-      {/* Bảng */}
+      {/* Bảng — scroll ngang khi màn hình nhỏ */}
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+        <table className="text-sm" style={{ minWidth: '1160px' }}>
           <thead>
             <tr className="bg-gray-50 text-xs text-gray-500 uppercase border-b">
+              <th className="py-3 px-3 w-9">
+                <input type="checkbox" className="accent-primary"
+                  checked={paged.length > 0 && paged.every(p => selectedIds.has(p.id))}
+                  onChange={toggleSelectAll} title="Chọn tất cả trang này"/>
+              </th>
               <th className="text-center py-3 px-3 w-10">STT</th>
-              <th className="py-3 px-3 w-14">Ảnh</th>
+              <th className="py-3 px-3 w-12">Ảnh</th>
               <th className="text-center py-3 px-3 w-20">Mã view</th>
-              <th className="text-left py-3 px-3">Tên thuốc</th>
-              <th className="text-left py-3 px-3 w-36">Danh mục</th>
-              <th className="text-right py-3 px-3 w-28">Giá bán</th>
-              <th className="text-center py-3 px-3 w-12">Rx</th>
-              <th className="text-center py-3 px-3 w-20">Nhãn</th>
-              <th className="text-center py-3 px-3 w-24">Hiển thị</th>
-              <th className="py-3 px-3 w-20"/>
+              <th className="text-left py-3 px-3 w-52">Tên thuốc</th>
+              <th className="text-left py-3 px-3 w-32">Danh mục</th>
+              <th className="text-left py-3 px-3 w-40">Hoạt chất</th>
+              <th className="text-left py-3 px-3 w-36">Hàm lượng</th>
+              <th className="text-left py-3 px-3 w-28">Đường dùng</th>
+              <th className="text-left py-3 px-3 w-20">ĐVT</th>
+              <th className="text-right py-3 px-3 w-24">Giá bán</th>
+              <th className="text-center py-3 px-3 w-10">Rx</th>
+              <th className="text-center py-3 px-3 w-20">Hiển thị</th>
+              <th className="py-3 px-3 w-16"/>
             </tr>
           </thead>
           <tbody>
             {paged.length === 0 ? (
-              <tr><td colSpan={10} className="text-center py-12 text-gray-400">
+              <tr><td colSpan={14} className="text-center py-12 text-gray-400">
                 <Package size={36} className="mx-auto mb-2 opacity-30"/>Không có sản phẩm nào
               </td></tr>
             ) : paged.map((p, idx) => (
-              <tr key={p.id} className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${!p.active ? 'opacity-50' : ''} ${editingId === p.id ? 'bg-primary-light' : ''}`}>
+              <tr key={p.id} className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${!p.active ? 'opacity-50' : ''} ${editingId === p.id ? 'bg-primary-light' : ''} ${selectedIds.has(p.id) ? 'bg-blue-50' : ''}`}>
+                <td className="py-2.5 px-3">
+                  <input type="checkbox" className="accent-primary" checked={selectedIds.has(p.id)}
+                    onChange={() => toggleSelect(p.id)}/>
+                </td>
                 <td className="py-2.5 px-3 text-center text-xs text-gray-500">{(page - 1) * PAGE_SIZE + idx + 1}</td>
                 <td className="py-2.5 px-3">
-                  <div className="w-10 h-10 rounded border bg-gray-50 flex items-center justify-center overflow-hidden">
-                    {p.image ? <img src={p.image} alt={p.name} className="w-full h-full object-contain"/> : <Package size={16} className="text-gray-300"/>}
+                  <div className="w-9 h-9 rounded border bg-gray-50 flex items-center justify-center overflow-hidden flex-shrink-0">
+                    {p.image ? <img src={p.image} alt={p.name} className="w-full h-full object-contain"/> : <Package size={14} className="text-gray-300"/>}
                   </div>
                 </td>
                 <td className="py-2.5 px-3 text-center">
                   <code className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-xs font-mono">{p.maview || '—'}</code>
                 </td>
                 <td className="py-2.5 px-3">
-                  <div className="font-medium text-gray-800">{p.name}</div>
-                  <div className="text-xs text-gray-400">{p.brand}{p.manufacturer ? ` · ${p.manufacturer}` : ''}</div>
+                  <div className="font-medium text-gray-800 leading-tight">{p.name}</div>
+                  <div className="text-xs text-gray-400 mt-0.5">{p.brand}{p.manufacturer ? ` · ${p.manufacturer}` : ''}</div>
                 </td>
                 <td className="py-2.5 px-3 text-xs text-gray-600">{p.categoryName || p.category}</td>
+                <td className="py-2.5 px-3 text-xs text-gray-700">{p.activeIngredient || <span className="text-gray-300">—</span>}</td>
+                <td className="py-2.5 px-3 text-xs text-gray-700">{p.hamLuong || <span className="text-gray-300">—</span>}</td>
+                <td className="py-2.5 px-3 text-xs text-gray-700">{p.duongDung || <span className="text-gray-300">—</span>}</td>
+                <td className="py-2.5 px-3 text-xs text-gray-700">{p.donViTinh || <span className="text-gray-300">—</span>}</td>
                 <td className="py-2.5 px-3 text-right">
-                  <div className="font-bold text-primary">{fmt(p.price)}</div>
+                  <div className="font-bold text-primary text-xs">{fmt(p.price)}</div>
                   {p.originalPrice > p.price && <div className="text-xs text-gray-400 line-through">{fmt(p.originalPrice)}</div>}
                 </td>
                 <td className="py-2.5 px-3 text-center">
                   {p.isRx ? <span className="text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-bold">Rx</span> : <span className="text-gray-300">—</span>}
-                </td>
-                <td className="py-2.5 px-3 text-center">
-                  {p.badge ? <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium">{p.badge}</span> : <span className="text-gray-300">—</span>}
                 </td>
                 <td className="py-2.5 px-3 text-center">
                   <button onClick={() => toggleProductActive(p.id)}
@@ -310,6 +377,11 @@ function ProductSection() {
                 </td>
                 <td className="py-2.5 px-3">
                   <div className="flex gap-1 justify-end">
+                    <button onClick={() => p.maview && setPrintProducts([p])} title="In barcode"
+                      disabled={!p.maview}
+                      className="p-1.5 rounded text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+                      <Barcode size={14}/>
+                    </button>
                     <button onClick={() => setEditingId(editingId === p.id ? null : p.id)} title="Sửa"
                       className={`p-1.5 rounded transition-colors ${editingId === p.id ? 'text-primary bg-primary-light' : 'text-gray-400 hover:text-primary hover:bg-primary-light'}`}>
                       <Edit2 size={14}/>
@@ -324,6 +396,7 @@ function ProductSection() {
             ))}
           </tbody>
         </table>
+        </div>
 
         {/* Footer: thông tin + phân trang */}
         <div className="px-4 py-2.5 bg-gray-50 border-t flex items-center justify-between">
@@ -353,6 +426,9 @@ function ProductSection() {
           )}
         </div>
       </div>
+      {printProducts && (
+        <BarcodePrintModal products={printProducts} onClose={() => setPrintProducts(null)}/>
+      )}
     </div>
   );
 }

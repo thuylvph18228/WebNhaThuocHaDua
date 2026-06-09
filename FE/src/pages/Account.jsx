@@ -12,7 +12,7 @@ const ROLE_BADGE = {
 };
 
 export default function Account() {
-  const { user, logout, canUsePOS } = useAuth();
+  const { user, logout, canUsePOS, sessionExpired, clearSessionExpired } = useAuth();
   const [tab, setTab] = useState('login');
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -46,6 +46,20 @@ export default function Account() {
         </div>
 
         <div className="p-6">
+          {/* Thông báo phiên làm việc hết hạn (auto-logout) */}
+          {sessionExpired && (
+            <div className="flex items-start gap-2 bg-orange-50 border border-orange-200 rounded-lg p-3 mb-4 text-sm">
+              <AlertCircle size={15} className="text-orange-500 flex-shrink-0 mt-0.5" />
+              <div>
+                <div className="font-medium text-orange-700">Phiên làm việc đã hết hạn</div>
+                <div className="text-orange-600 text-xs mt-0.5">
+                  Bạn đã không thao tác trong một thời gian dài. Vui lòng đăng nhập lại để tiếp tục.
+                </div>
+              </div>
+              <button onClick={clearSessionExpired} className="ml-auto text-orange-400 hover:text-orange-600 flex-shrink-0">✕</button>
+            </div>
+          )}
+
           {/* Thông báo redirect từ POS */}
           {searchParams.get('redirect') === 'pos' && (
             <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4 text-sm">

@@ -2,11 +2,13 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import {
   Search, Trash2, Plus, Minus, Printer, X,
-  CheckCircle, AlertCircle, ClipboardList,
+  CheckCircle, AlertCircle, Camera, User, ShoppingBag,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProducts } from '../context/ProductContext';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { lazy, Suspense } from 'react';
+const BarcodeScanner = lazy(() => import('../components/BarcodeScanner'));
 
 // Format tiền VND
 function fmt(n) {
@@ -58,6 +60,8 @@ export default function POS() {
   const [orderId, setOrderId] = useState(null);
   const [toast, setToast] = useState(null);
   const [cancelConfirm, setCancelConfirm] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
+  const [mobileTab, setMobileTab] = useState('order'); // 'order' | 'customer'
 
   const focusBarcode = useCallback(() => {
     setTimeout(() => barcodeRef.current?.focus(), 50);
@@ -117,6 +121,18 @@ export default function POS() {
       return [...prev, { ...product, qty: 1 }];
     });
   }, [showToast]);
+
+  // Xử lý kết quả từ camera scanner — đặt sau addToOrder để tránh TDZ
+  const handleCameraDetected = useCallback((code) => {
+    const product = findByBarcode(products, code);
+    if (product) {
+      addToOrder(product);
+      showToast(`✓ Đã thêm: ${product.name}`);
+      setMobileTab('order');
+    } else {
+      showToast(`Không tìm thấy mã: ${code}`, 'error');
+    }
+  }, [products, addToOrder, showToast]);
 
   const removeItem = useCallback((id) => {
     setOrderItems(prev => prev.filter(i => i.id !== id));
@@ -299,15 +315,41 @@ export default function POS() {
         </div>
       )}
 
-      {/* Layout 2 cột */}
+      {/* Tab bar — chỉ hiện trên mobile */}
+      <div className="flex md:hidden border-b bg-white flex-shrink-0">
+        <button onClick={() => setMobileTab('order')}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold border-b-2 transition-colors ${mobileTab === 'order' ? 'border-primary text-primary' : 'border-transparent text-gray-500'}`}>
+          <ShoppingBag size={15} />
+          Đơn hàng
+          {orderItems.length > 0 && (
+            <span className="bg-primary text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">{orderItems.length}</span>
+          )}
+        </button>
+        <button onClick={() => setMobileTab('customer')}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold border-b-2 transition-colors ${mobileTab === 'customer' ? 'border-primary text-primary' : 'border-transparent text-gray-500'}`}>
+          <User size={15} />
+          Khách hàng
+        </button>
+      </div>
+
+      {/* Layout 2 cột (desktop) / 1 cột (mobile) */}
       <div className="flex flex-1 min-h-0 overflow-hidden">
 
         {/* ═══ CỘT TRÁI: Danh sách thuốc trong đơn ═══ */}
-        <div className="flex flex-col flex-1 min-w-0 border-r border-gray-200 bg-gray-50">
+        <div className={`flex-col min-w-0 border-r border-gray-200 bg-gray-50 flex-1 ${mobileTab === 'order' ? 'flex' : 'hidden md:flex'}`}>
           {/* Thanh quét / tìm kiếm */}
           <div className="bg-white border-b p-2.5 flex gap-2 flex-shrink-0">
-            {/* Ô barcode */}
-            <div className="flex-1 relative">
+            {/* Nút camera — nổi bật trên mobile */}
+            <button
+              onClick={() => setShowScanner(true)}
+              title="Quét mã vạch bằng camera"
+              className="flex items-center justify-center gap-1.5 bg-primary text-white px-3 py-2 rounded-lg hover:bg-primary-dark flex-shrink-0 text-sm font-medium"
+            >
+              <Camera size={16} />
+              <span className="hidden sm:inline">Camera</span>
+            </button>
+            {/* Ô barcode — ẩn trên mobile nhỏ vì dùng camera */}
+            <div className="flex-1 relative hidden sm:block">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 ref={barcodeRef}
@@ -315,12 +357,12 @@ export default function POS() {
                 value={barcodeInput}
                 onChange={e => setBarcodeInput(e.target.value)}
                 onKeyDown={handleBarcodeKeyDown}
-                placeholder="Quét barcode / nhập mã view (VD: PANA24), nhấn Enter..."
+                placeholder="Nhập mã view (VD: PANA24), nhấn Enter..."
                 className="w-full border-2 border-primary rounded-lg pl-9 pr-3 py-2 text-sm outline-none bg-green-50 font-medium placeholder-gray-400"
               />
             </div>
             {/* Tìm kiếm nhanh theo tên */}
-            <div className="relative w-64">
+            <div className="relative flex-1 sm:flex-none sm:w-64">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10" />
               <input
                 ref={searchRef}
@@ -342,6 +384,7 @@ export default function POS() {
                         setSearchQ('');
                         setShowDropdown(false);
                         showToast(`✓ Đã thêm: ${p.name}`);
+                        setMobileTab('order');
                         focusSearch();
                       }}
                       className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-primary-light text-left border-b border-gray-50 last:border-0"
@@ -446,16 +489,22 @@ export default function POS() {
                 className="flex items-center gap-1.5 border border-gray-300 text-gray-600 px-3 py-2 rounded-lg hover:bg-gray-50 text-sm font-medium">
                 <X size={14} /> Hủy đơn
               </button>
+              {/* Desktop: thanh toán thẳng | Mobile: sang tab Khách hàng trước */}
               <button onClick={handleCheckout} disabled={orderItems.length === 0}
-                className="flex-1 bg-primary text-white font-bold py-2 rounded-lg hover:bg-primary-dark text-sm disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                className="flex-1 bg-primary text-white font-bold py-2 rounded-lg hover:bg-primary-dark text-sm disabled:opacity-40 disabled:cursor-not-allowed items-center justify-center gap-2 hidden md:flex">
                 <Printer size={15} /> Thanh toán — {fmt(total)}
+              </button>
+              <button onClick={() => { if (orderItems.length === 0) { showToast('Thêm thuốc vào đơn trước', 'error'); return; } setMobileTab('customer'); }}
+                disabled={orderItems.length === 0}
+                className="flex-1 bg-primary text-white font-bold py-2 rounded-lg hover:bg-primary-dark text-sm disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 md:hidden">
+                Tiếp theo — Khách hàng →
               </button>
             </div>
           </div>
         </div>
 
         {/* ═══ CỘT PHẢI: Thông tin cuống phiếu ═══ */}
-        <div className="w-72 xl:w-80 flex-shrink-0 bg-white flex flex-col overflow-hidden">
+        <div className={`flex-col flex-shrink-0 bg-white overflow-hidden w-full md:w-72 xl:w-80 ${mobileTab === 'customer' ? 'flex' : 'hidden md:flex'}`}>
           <div className="bg-gray-700 text-white px-4 py-2.5 text-sm font-bold flex-shrink-0">
             Thông tin cuống phiếu
           </div>
@@ -529,10 +578,16 @@ export default function POS() {
             </form>
           </div>
           <div className="p-3 border-t bg-gray-50 flex-shrink-0">
-            <button onClick={handleCheckout} disabled={orderItems.length === 0}
-              className="w-full bg-primary text-white font-black py-2.5 rounded-lg hover:bg-primary-dark disabled:opacity-40 disabled:cursor-not-allowed text-sm">
-              💳 Thanh toán
-            </button>
+            <div className="flex gap-2">
+              <button onClick={() => setMobileTab('order')}
+                className="border border-gray-300 text-gray-600 px-3 py-2.5 rounded-lg hover:bg-gray-50 text-sm font-medium md:hidden">
+                ← Đơn hàng
+              </button>
+              <button onClick={handleCheckout} disabled={orderItems.length === 0}
+                className="flex-1 bg-primary text-white font-black py-2.5 rounded-lg hover:bg-primary-dark disabled:opacity-40 disabled:cursor-not-allowed text-sm">
+                💳 Thanh toán{orderItems.length > 0 ? ` — ${fmt(total)}` : ''}
+              </button>
+            </div>
             <p className="text-center text-xs text-gray-400 mt-1.5">
               {orderItems.length === 0 ? 'Thêm thuốc vào đơn trước' : `${orderItems.length} loại · ${fmt(total)}`}
             </p>
@@ -541,6 +596,16 @@ export default function POS() {
       </div>
     </div>
     </div>
+
+    {/* Camera barcode scanner — lazy loaded để không ảnh hưởng load ban đầu */}
+    {showScanner && (
+      <Suspense fallback={<div className="fixed inset-0 z-50 bg-black flex items-center justify-center text-white">Đang tải camera...</div>}>
+        <BarcodeScanner
+          onDetected={handleCameraDetected}
+          onClose={() => setShowScanner(false)}
+        />
+      </Suspense>
+    )}
 
     {/* Dialog xác nhận hủy đơn */}
     {cancelConfirm && (
